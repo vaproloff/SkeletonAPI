@@ -1,8 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.params import Depends
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-
-from app.core.security import hash_password, verify_password, create_access_token
+from app.core.security import hash_password, verify_password, create_access_token, decode_access_token
 from app.models.user import User
 from app.database import engine, Base, get_db
 from app.schemas.user import UserOut, UserCreate
@@ -10,6 +9,8 @@ from app.schemas.user import UserOut, UserCreate
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 @app.get("/health")
@@ -35,15 +36,40 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@app.post("/login")
-def login(email: str, password: str, db: Session = Depends(get_db)):
-    existing_user: User = db.query(User).filter(User.email == email).first()
-    if not existing_user or not verify_password(password, existing_user.hashed_password):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+def get_current_user(access_token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    payload = decode_access_token(access_token)
+    if payload is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
-    access_token = create_access_token({"email": email})
+    email = payload.get("email")
+    if email is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    user = db.query(User).filter(User.email == email).first()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    return user
+
+
+@app.post("/token")
+def token(
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        db: Session = Depends(get_db),
+):
+    user: User = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
+
+    access_token = create_access_token({"email": user.email})
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+@app.get("/me", response_model=UserOut)
+def me(current_user: User = Depends(get_current_user)):
+    return current_user
