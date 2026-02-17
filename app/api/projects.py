@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
@@ -23,3 +23,12 @@ def create_project(
     db.refresh(new_project)
 
     return new_project
+
+
+@router.get("/", response_model=list[ProjectOut])
+def get_projects(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db),
+):
+    projects = db.query(Project).filter(Project.owner_id == current_user.id).all()
+    return projects
