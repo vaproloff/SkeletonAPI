@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -8,6 +10,8 @@ class ProjectCreate(BaseModel):
 class ProjectOut(BaseModel):
     id: int
     name: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class ProjectUpdate(BaseModel):

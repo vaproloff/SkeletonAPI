@@ -1,11 +1,6 @@
 from fastapi import FastAPI
 
 from app.api import all_routers
-from app.database import engine, Base
-from app.models.user import User
-from app.models.project import Project
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
