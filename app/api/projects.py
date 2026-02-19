@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
@@ -7,14 +9,14 @@ from app.models.project import Project
 from app.models.user import User
 from app.schemas.project import ProjectOut, ProjectCreate, ProjectUpdate
 
-router = APIRouter(tags=["projects"])
+router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 def _get_owned_project(db: Session, user_id: int, project_id: int) -> Project | None:
     return db.query(Project).filter(Project.id == project_id, Project.owner_id == user_id).first()
 
 
-@router.post("/", response_model=ProjectOut)
+@router.post("", response_model=ProjectOut)
 def create_project(
         project: ProjectCreate,
         current_user: User = Depends(get_current_user),
@@ -29,7 +31,7 @@ def create_project(
     return new_project
 
 
-@router.get("/", response_model=list[ProjectOut])
+@router.get("", response_model=list[ProjectOut])
 def get_projects(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
@@ -64,6 +66,8 @@ def update_project(
 
     if project_in.name is not None:
         project.name = project_in.name
+
+    project.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(project)
