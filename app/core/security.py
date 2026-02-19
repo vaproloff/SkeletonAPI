@@ -1,11 +1,12 @@
+import os
 from datetime import timedelta, datetime, timezone
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
-ALGORITHM = "HS256"
-SECRET_KEY = 'super-secret-key'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
