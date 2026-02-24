@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U app -d app_db" ]
       interval: 3s
@@ -24,6 +25,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    restart: "no"
     command: [ "alembic", "upgrade", "head" ]
 
   api:
@@ -34,6 +36,7 @@ services:
         condition: service_completed_successfully
     ports:
       - "8000:8000"
+    restart: unless-stopped
     command: [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000" ]
 
 volumes:

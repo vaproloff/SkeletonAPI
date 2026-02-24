@@ -30,8 +30,8 @@ Production-ready backend skeleton built with FastAPI, PostgreSQL, Alembic, Docke
 Clone the repository:
 
 ```bash
-git clone <your-repo-url>
-cd <project-folder>
+git clone https://github.com/vaproloff/SkeletonAPI.git
+cd SkeletonAPI/
 ```
 
 Create environment file:
