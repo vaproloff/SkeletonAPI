@@ -1,7 +1,7 @@
 import os
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from jose import jwt, JWTError
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me")
@@ -17,7 +17,9 @@ def hash_password(password: str) -> str:
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
-    to_encode.update({"exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)})
+    to_encode.update(
+        {"exp": datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)}
+    )
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 

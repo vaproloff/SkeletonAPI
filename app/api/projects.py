@@ -7,7 +7,7 @@ from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.project import Project
 from app.models.user import User
-from app.schemas.project import ProjectOut, ProjectCreate, ProjectUpdate
+from app.schemas.project import ProjectCreate, ProjectOut, ProjectUpdate
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
