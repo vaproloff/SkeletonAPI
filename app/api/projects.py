@@ -1,34 +1,22 @@
-from datetime import datetime, timezone
-
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user
 from app.database import get_db
-from app.models.project import Project
 from app.models.user import User
 from app.schemas.project import ProjectCreate, ProjectOut, ProjectUpdate
+from app.services import project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
 
-def _get_owned_project(db: Session, user_id: int, project_id: int) -> Project | None:
-    return db.query(Project).filter(Project.id == project_id, Project.owner_id == user_id).first()
-
-
 @router.post("", response_model=ProjectOut)
 def create_project(
-        project: ProjectCreate,
+        project_in: ProjectCreate,
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    new_project = Project(name=project.name, owner_id=current_user.id)
-
-    db.add(new_project)
-    db.commit()
-    db.refresh(new_project)
-
-    return new_project
+    return project_service.create_project(db, current_user, project_in)
 
 
 @router.get("", response_model=list[ProjectOut])
@@ -36,8 +24,7 @@ def get_projects(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    projects = db.query(Project).filter(Project.owner_id == current_user.id).all()
-    return projects
+    return project_service.get_projects(db, current_user)
 
 
 @router.get("/{project_id}", response_model=ProjectOut)
@@ -46,8 +33,8 @@ def get_project(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db)
 ):
-    project = _get_owned_project(db, current_user.id, project_id)
-    if not project:
+    project = project_service.get_project(db, current_user, project_id)
+    if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
 
     return project
@@ -60,17 +47,9 @@ def update_project(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    project = _get_owned_project(db, current_user.id, project_id)
-    if not project:
+    project = project_service.update_project(db, current_user, project_id, project_in)
+    if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
-
-    if project_in.name is not None:
-        project.name = project_in.name
-
-    project.updated_at = datetime.now(timezone.utc)
-
-    db.commit()
-    db.refresh(project)
 
     return project
 
@@ -81,11 +60,8 @@ def delete_project(
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    project = _get_owned_project(db, current_user.id, project_id)
-    if not project:
+    deleted = project_service.delete_project(db, current_user, project_id)
+    if not deleted:
         raise HTTPException(status_code=404, detail="Project not found")
-
-    db.delete(project)
-    db.commit()
 
     return Response(status_code=204)
