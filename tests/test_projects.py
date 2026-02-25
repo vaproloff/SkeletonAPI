@@ -58,3 +58,37 @@ def test_delete_project_removes_it(client):
 
     r = client.get(f'/projects/{project_id}', headers=headers)
     assert r.status_code == 404, r.text
+
+
+def test_projects_limits_and_offsets(client):
+    headers = _auth_headers(client, email="limit@test.com", password="secret")
+
+    p1 = client.post("/projects", json={"name": "project 1"}, headers=headers)
+    assert p1.status_code == 200, p1.text
+    p2 = client.post("/projects", json={"name": "project 2"}, headers=headers)
+    assert p2.status_code == 200, p2.text
+    p3 = client.post("/projects", json={"name": "project 3"}, headers=headers)
+    assert p3.status_code == 200, p3.text
+
+    r1 = client.get("/projects?limit=2&offset=0", headers=headers)
+    assert r1.status_code == 200, r1.text
+    projects = r1.json()
+    assert len(projects) == 2
+
+    r2 = client.get("/projects?limit=2&offset=2", headers=headers)
+    assert r2.status_code == 200, r2.text
+    assert len(r2.json()) == 1
+
+
+def test_projects_sorting(client):
+    headers = _auth_headers(client, email="sort@test.com", password="secret")
+
+    p1 = client.post("/projects", json={"name": "project 1"}, headers=headers)
+    assert p1.status_code == 200, p1.text
+    p2 = client.post("/projects", json={"name": "project 2"}, headers=headers)
+    assert p2.status_code == 200, p2.text
+
+    r = client.get("/projects", headers=headers)
+    assert r.status_code == 200, r.text
+    project_ids = [p["id"] for p in r.json()]
+    assert project_ids == sorted(project_ids, reverse=True)

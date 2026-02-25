@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.models.project import Project
@@ -21,8 +22,14 @@ def create_project(db: Session, user: User, data: ProjectCreate) -> Project:
     return project
 
 
-def get_projects(db: Session, user: User) -> list[Project]:
-    return db.query(Project).filter(Project.owner_id == user.id).all()
+def get_projects(db: Session, user: User, *, limit: int, offset: int) -> list[Project]:
+    return (db.query(Project)
+            .filter(Project.owner_id == user.id)
+            .order_by(desc(Project.id))
+            .limit(limit)
+            .offset(offset)
+            .all()
+            )
 
 
 def get_project(db: Session, user: User, project_id: int) -> Project | None:
