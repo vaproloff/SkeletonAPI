@@ -22,3 +22,12 @@ def test_register_and_token(client):
     token_data = t.json()
     assert "access_token" in token_data
     assert token_data["token_type"] == "bearer"
+
+
+def test_duplicate_user_register(client):
+    r = client.post("auth/register", json={"email": "a@test.com", "password": "secret"})
+    assert r.status_code == 200, r.text
+
+    d = client.post("auth/register", json={"email": "a@test.com", "password": "secret"})
+    assert d.status_code == 400, d.text
+    assert d.json() == {"detail": "Email already registered"}

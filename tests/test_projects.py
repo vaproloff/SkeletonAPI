@@ -92,3 +92,11 @@ def test_projects_sorting(client):
     assert r.status_code == 200, r.text
     project_ids = [p["id"] for p in r.json()]
     assert project_ids == sorted(project_ids, reverse=True)
+
+
+def test_get_unknown_project(client):
+    headers = _auth_headers(client, email="unexist@test.com", password="secret")
+
+    r = client.get("/projects/999999", headers=headers)
+    assert r.status_code == 404, r.text
+    assert r.json() == {"detail": "Project not found"}
