@@ -1,22 +1,17 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.models.project import Project
 from app.models.user import User
+from app.repositories import project_repo
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.services.exceptions import NotFoundError
 
 
-def _get_owned_project(db: Session, user_id: int, project_id: int) -> Project | None:
-    return db.query(Project).filter(Project.id == project_id, Project.owner_id == user_id).first()
-
-
 def create_project(db: Session, user: User, data: ProjectCreate) -> Project:
-    project = Project(name=data.name, owner_id=user.id)
+    project = project_repo.create(db, user.id, data.name)
 
-    db.add(project)
     db.commit()
     db.refresh(project)
 
@@ -24,17 +19,11 @@ def create_project(db: Session, user: User, data: ProjectCreate) -> Project:
 
 
 def get_projects(db: Session, user: User, *, limit: int, offset: int) -> list[Project]:
-    return (db.query(Project)
-            .filter(Project.owner_id == user.id)
-            .order_by(desc(Project.id))
-            .limit(limit)
-            .offset(offset)
-            .all()
-            )
+    return project_repo.list_by_owner(db, user.id, limit, offset)
 
 
 def get_project(db: Session, user: User, project_id: int) -> Project:
-    project = _get_owned_project(db, user.id, project_id)
+    project = project_repo.get_owned_by_id(db, user.id, project_id)
     if project is None:
         raise NotFoundError("Project not found")
 
@@ -42,7 +31,7 @@ def get_project(db: Session, user: User, project_id: int) -> Project:
 
 
 def update_project(db: Session, user: User, project_id: int, data: ProjectUpdate) -> Project:
-    project = _get_owned_project(db, user.id, project_id)
+    project = project_repo.get_owned_by_id(db, user.id, project_id)
     if project is None:
         raise NotFoundError("Project not found")
 
@@ -56,9 +45,9 @@ def update_project(db: Session, user: User, project_id: int, data: ProjectUpdate
 
 
 def delete_project(db: Session, user: User, project_id: int) -> None:
-    project = _get_owned_project(db, user.id, project_id)
+    project = project_repo.get_owned_by_id(db, user.id, project_id)
     if project is None:
         raise NotFoundError("Project not found")
 
-    db.delete(project)
+    project_repo.delete(db, project)
     db.commit()
