@@ -18,7 +18,7 @@ def test_get_unknown_project(db_session):
         project_service.get_project(db_session, user, 123)
 
 
-def test_duplicate_user_register(db_session):
+def test_duplicate_user_registration(db_session):
     user = User(email="dup@test.com", hashed_password=hash_password("secret"))
     db_session.add(user)
     db_session.commit()
@@ -26,6 +26,10 @@ def test_duplicate_user_register(db_session):
 
     with pytest.raises(AlreadyExistsError):
         auth_service.register_user(db_session, UserCreate(email="dup@test.com", password="secret2"))
+
+    user = auth_service.register_user(db_session,
+                                      UserCreate(email="no_dup@test.com", password="secret"))
+    assert user is not None
 
 
 def test_update_project_updates_timestamp(db_session):

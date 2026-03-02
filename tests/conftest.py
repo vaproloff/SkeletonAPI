@@ -27,12 +27,9 @@ def create_test_schema():
 
 @pytest.fixture()
 def db_session():
-    """
-    Изоляция: каждый тест в транзакции, в конце rollback.
-    """
     connection = engine_test.connect()
     transaction = connection.begin()
-    session = SessionLocalTest(bind=connection)
+    session = SessionLocalTest(bind=connection, join_transaction_mode="create_savepoint")
 
     try:
         yield session
@@ -44,10 +41,6 @@ def db_session():
 
 @pytest.fixture()
 def client(db_session):
-    """
-    Подменяем get_db на тестовую сессию.
-    """
-
     def override_get_db():
         try:
             yield db_session

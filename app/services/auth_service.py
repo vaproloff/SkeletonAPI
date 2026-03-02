@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import create_access_token, hash_password, verify_password
@@ -7,19 +8,19 @@ from app.services.exceptions import AlreadyExistsError
 
 
 def register_user(db: Session, data: UserCreate) -> User:
-    existing = db.query(User).filter(User.email == data.email).first()
-    if existing:
-        raise AlreadyExistsError("Email already registered")
-
     new_user = User(
         email=data.email,
         hashed_password=hash_password(data.password)
     )
-
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
 
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        raise AlreadyExistsError("Email already registered") from e
+
+    db.refresh(new_user)
     return new_user
 
 
