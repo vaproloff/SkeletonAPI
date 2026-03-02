@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint, func
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -6,6 +6,7 @@ from app.database import Base
 
 class Project(Base):
     __tablename__ = "project"
+    __table_args__ = (UniqueConstraint("name", "owner_id", name="uq_project_owner_name"),)
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)

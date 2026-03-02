@@ -1,18 +1,24 @@
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.project import Project
 from app.models.user import User
 from app.repositories import project_repo
 from app.schemas.project import ProjectCreate, ProjectUpdate
-from app.services.exceptions import NotFoundError
+from app.services.exceptions import AlreadyExistsError, NotFoundError
 
 
 def create_project(db: Session, user: User, data: ProjectCreate) -> Project:
     project = project_repo.create(db, user.id, data.name)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as e:
+        db.rollback()
+        raise AlreadyExistsError("Project name already used") from e
+
     db.refresh(project)
 
     return project
