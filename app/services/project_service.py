@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.project import Project
 from app.models.user import User
 from app.repositories import project_repo
-from app.schemas.project import ProjectCreate, ProjectUpdate
+from app.schemas.project import ProjectCreate, ProjectsPageOut, ProjectUpdate
 from app.services.exceptions import AlreadyExistsError, NotFoundError
 
 
@@ -57,3 +57,9 @@ def delete_project(db: Session, user: User, project_id: int) -> None:
 
     project_repo.delete(db, project)
     db.commit()
+
+
+def get_projects_page(db: Session, user: User, *, limit: int, offset: int) -> ProjectsPageOut:
+    items = project_repo.list_by_owner(db, user.id, limit, offset)
+    total = project_repo.count_by_owner(db, user.id)
+    return ProjectsPageOut(items=items, total=total, limit=limit, offset=offset)

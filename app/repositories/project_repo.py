@@ -29,3 +29,7 @@ def create(db: Session, owner_id: int, name: str) -> Project:
 
 def delete(db: Session, project: Project) -> None:
     db.delete(project)
+
+
+def count_by_owner(db: Session, owner_id: int) -> int:
+    return db.query(Project).filter(Project.owner_id == owner_id).count()

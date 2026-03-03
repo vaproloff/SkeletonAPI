@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.database import get_db
 from app.models.user import User
-from app.schemas.project import ProjectCreate, ProjectOut, ProjectUpdate
+from app.schemas.project import ProjectCreate, ProjectOut, ProjectsPageOut, ProjectUpdate
 from app.services import project_service
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -19,14 +19,14 @@ def create_project(
     return project_service.create_project(db, current_user, project_in)
 
 
-@router.get("", response_model=list[ProjectOut])
+@router.get("", response_model=ProjectsPageOut)
 def get_projects(
         limit: int = Query(default=20, ge=1, le=100),
         offset: int = Query(default=0, ge=0),
         current_user: User = Depends(get_current_user),
         db: Session = Depends(get_db),
 ):
-    return project_service.get_projects(db, current_user, limit=limit, offset=offset)
+    return project_service.get_projects_page(db, current_user, limit=limit, offset=offset)
 
 
 @router.get("/{project_id}", response_model=ProjectOut)

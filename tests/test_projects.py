@@ -73,11 +73,12 @@ def test_projects_limits_and_offsets(client):
     r1 = client.get("/projects?limit=2&offset=0", headers=headers)
     assert r1.status_code == 200, r1.text
     projects = r1.json()
-    assert len(projects) == 2
+    assert len(projects["items"]) == 2
 
     r2 = client.get("/projects?limit=2&offset=2", headers=headers)
     assert r2.status_code == 200, r2.text
-    assert len(r2.json()) == 1
+    projects = r2.json()
+    assert len(projects["items"]) == 1
 
 
 def test_projects_sorting(client):
@@ -90,7 +91,7 @@ def test_projects_sorting(client):
 
     r = client.get("/projects", headers=headers)
     assert r.status_code == 200, r.text
-    project_ids = [p["id"] for p in r.json()]
+    project_ids = [p["id"] for p in r.json()["items"]]
     assert project_ids == sorted(project_ids, reverse=True)
 
 
@@ -100,3 +101,22 @@ def test_get_unknown_project(client):
     r = client.get("/projects/999999", headers=headers)
     assert r.status_code == 404, r.text
     assert r.json() == {"detail": "Project not found"}
+
+
+def test_get_project_page(client):
+    headers = _auth_headers(client, email="page@test.com", password="secret")
+
+    p1 = client.post("/projects", json={"name": "project 1"}, headers=headers)
+    assert p1.status_code == 200, p1.text
+    p2 = client.post("/projects", json={"name": "project 2"}, headers=headers)
+    assert p2.status_code == 200, p2.text
+    p3 = client.post("/projects", json={"name": "project 3"}, headers=headers)
+    assert p3.status_code == 200, p3.text
+
+    r = client.get("/projects?limit=2&offset=0", headers=headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["total"] == 3
+    assert data["limit"] == 2
+    assert data["offset"] == 0
+    assert len(data["items"]) == 2
