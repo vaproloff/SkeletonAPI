@@ -25,7 +25,7 @@ def create_project(db: Session, user: User, data: ProjectCreate) -> Project:
 
 
 def get_projects(db: Session, user: User, *, limit: int, offset: int) -> list[Project]:
-    return project_repo.list_by_owner(db, user.id, limit, offset)
+    return project_repo.list_by_owner(db, user.id, limit=limit, offset=offset)
 
 
 def get_project(db: Session, user: User, project_id: int) -> Project:
@@ -60,12 +60,12 @@ def delete_project(db: Session, user: User, project_id: int) -> None:
 
 
 def get_projects_page(db: Session, user: User, *, limit: int, offset: int) -> ProjectsPageOut:
-    items = project_repo.list_by_owner(db, user.id, limit, offset)
+    items = project_repo.list_by_owner(db, user.id, limit=limit, offset=offset)
     total = project_repo.count_by_owner(db, user.id)
     return ProjectsPageOut(items=items, total=total, limit=limit, offset=offset)
 
 
 def get_projects_page_admin(db: Session, *, limit: int, offset: int) -> ProjectsPageOut:
-    items = project_repo.list_all(db, limit, offset)
+    items = project_repo.list_all(db, limit=limit, offset=offset)
     total = project_repo.count_all(db)
     return ProjectsPageOut(items=items, total=total, limit=limit, offset=offset)
