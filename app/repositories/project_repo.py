@@ -11,9 +11,18 @@ def get_owned_by_id(db: Session, owner_id: int, project_id: int) -> Project | No
             )
 
 
-def list_by_owner(db: Session, owner_id: int, limit: int, offset: int) -> list[Project]:
+def list_by_owner(db: Session, owner_id: int, *, limit: int, offset: int) -> list[Project]:
     return (db.query(Project)
             .filter(Project.owner_id == owner_id)
+            .order_by(desc(Project.id))
+            .limit(limit)
+            .offset(offset)
+            .all()
+            )
+
+
+def list_all(db: Session, *, limit: int, offset: int) -> list[Project]:
+    return (db.query(Project)
             .order_by(desc(Project.id))
             .limit(limit)
             .offset(offset)
@@ -33,3 +42,7 @@ def delete(db: Session, project: Project) -> None:
 
 def count_by_owner(db: Session, owner_id: int) -> int:
     return db.query(Project).filter(Project.owner_id == owner_id).count()
+
+
+def count_all(db: Session) -> int:
+    return db.query(Project).count()

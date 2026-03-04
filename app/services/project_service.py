@@ -63,3 +63,9 @@ def get_projects_page(db: Session, user: User, *, limit: int, offset: int) -> Pr
     items = project_repo.list_by_owner(db, user.id, limit, offset)
     total = project_repo.count_by_owner(db, user.id)
     return ProjectsPageOut(items=items, total=total, limit=limit, offset=offset)
+
+
+def get_projects_page_admin(db: Session, *, limit: int, offset: int) -> ProjectsPageOut:
+    items = project_repo.list_all(db, limit, offset)
+    total = project_repo.count_all(db)
+    return ProjectsPageOut(items=items, total=total, limit=limit, offset=offset)
