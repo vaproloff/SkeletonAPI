@@ -14,3 +14,7 @@ class UserOut(BaseModel):
     id: int
     email: EmailStr
     role: UserRole
+
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole
